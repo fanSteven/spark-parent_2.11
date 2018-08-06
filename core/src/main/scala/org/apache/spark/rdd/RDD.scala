@@ -46,6 +46,10 @@ import org.apache.spark.util.random.{BernoulliCellSampler, BernoulliSampler, Poi
   SamplingUtils}
 
 /**
+  * RDD 弹性、分布式的数据集合。是spark中的基本抽象概念，代表一个可以被并行操作的不可变分布式集合。
+  * 这个类包含在所有RDD上都可以操作的方法比如：map，filter和persist
+  * 另外：PairRDDFunctions包含只有key-value的二元组的RDD使用的方法，如：groupByKey、join
+  * SequenceFileRDDFunctions包含SequenceFiles类型的RDD的操作。
  * A Resilient Distributed Dataset (RDD), the basic abstraction in Spark. Represents an immutable,
  * partitioned collection of elements that can be operated on in parallel. This class contains the
  * basic operations available on all RDDs, such as `map`, `filter`, and `persist`. In addition,
@@ -59,7 +63,11 @@ import org.apache.spark.util.random.{BernoulliCellSampler, BernoulliSampler, Poi
  * through implicit.
  *
  * Internally, each RDD is characterized by five main properties:
- *
+ *    partitions
+  *   计算split的方法
+  *   依赖
+  *   key-value的RDD划分partiiton的方法（可选）
+  *   首选计算节点（可选）
  *  - A list of partitions
  *  - A function for computing each split
  *  - A list of dependencies on other RDDs
@@ -67,6 +75,7 @@ import org.apache.spark.util.random.{BernoulliCellSampler, BernoulliSampler, Poi
  *  - Optionally, a list of preferred locations to compute each split on (e.g. block locations for
  *    an HDFS file)
  *
+  * 在spark中所有的调度和计算方法，都是通过不同的RDD的不同实现来计算不同的RDD本身来实现的。
  * All of the scheduling and execution in Spark is done based on these methods, allowing each RDD
  * to implement its own way of computing itself. Indeed, users can implement custom RDDs (e.g. for
  * reading data from a new storage system) by overriding these functions. Please refer to the
