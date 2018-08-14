@@ -157,6 +157,10 @@ object SparkSubmit {
    */
   @tailrec
   private def submit(args: SparkSubmitArguments): Unit = {
+    //childArgs    参数  将来要传递给Client的main方法
+    //childClasspath  classPath ArrayBuffer 由提交的程序jar决定
+    //sysProps    属性，键值对  ArrayBuffer
+    //childMainClass  MainClass master和deployMode确定是由哪个Client
     val (childArgs, childClasspath, sysProps, childMainClass) = prepareSubmitEnvironment(args)
 
     def doRunMain(): Unit = {
@@ -659,6 +663,9 @@ object SparkSubmit {
    *
    * Note that this main class will not be the one provided by the user if we're
    * running cluster deploy mode or python applications.
+    *
+    * 根据反射调用对应Client的main方法，然后就推出了。
+    *
    */
   private def runMain(
       childArgs: Seq[String],

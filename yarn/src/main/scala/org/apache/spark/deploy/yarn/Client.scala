@@ -140,7 +140,8 @@ private[spark] class Client(
 
   /**
    * Submit an application running our ApplicationMaster to the ResourceManager.
-   *
+   * 向ResourceManager提交一个程序运行am，
+    *
    * The stable Yarn API provides a convenience method (YarnClient#createApplication) for
    * creating applications and setting up the application submission context. This was not
    * available in the alpha API.
@@ -154,10 +155,13 @@ private[spark] class Client(
       // so we have don't have issues at any point.
       setupCredentials()
       //初始化yarnConf
+      //setConfig(conf)  set给一个org.apache.hadoop.conf.Configuration变量
+      //serviceInit(config) 在用config
       yarnClient.init(yarnConf)
       //AbstractService.start()
       //AbstractService.start()->YarnClientImpl.serviceStart
-      //主要是创建了一个 The protocol between clients and the ResourceManager 的对象 rmClient
+      //
+      //主要是创建了一个 The protocol between clients and the ResourceManager 的对象 ApplicationClientProtocol：rmClient
       yarnClient.start()
 
       logInfo("Requesting a new application from cluster with %d NodeManagers"
@@ -165,6 +169,7 @@ private[spark] class Client(
 
       // Get a new application from our RM
       val newApp = yarnClient.createApplication()
+      // appId和分配的最大资源情况
       val newAppResponse = newApp.getNewApplicationResponse()
       appId = newAppResponse.getApplicationId()
       reportLauncherState(SparkAppHandle.State.SUBMITTED)
@@ -880,7 +885,9 @@ private[spark] class Client(
   /**
    * Set up a ContainerLaunchContext to launch our ApplicationMaster container.
    * This sets up the launch environment, java options, and the command for launching the AM.
-   */
+    *
+    * 为ApplicationMaster创建一个Container
+    * */
   private def createContainerLaunchContext(newAppResponse: GetNewApplicationResponse)
     : ContainerLaunchContext = {
     logInfo("Setting up container launch context for our AM")
@@ -1178,6 +1185,7 @@ private[spark] class Client(
    * throw an appropriate SparkException.
    */
   def run(): Unit = {
+    //通过submitApplication提交任务，然后获取程序状态
     this.appId = submitApplication()
     if (!launcherBackend.isConnected() && fireAndForget) {
       val report = getApplicationReport(appId)

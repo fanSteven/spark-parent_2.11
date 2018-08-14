@@ -33,14 +33,19 @@ private[spark] abstract class CheckpointRDD[T: ClassTag](sc: SparkContext)
   extends RDD[T](sc, Nil) {
 
   // CheckpointRDD should not be checkpointed again
+  //将RDD的partition数据写到hdfs
   override def doCheckpoint(): Unit = { }
+  //标记RDD为checkpoint对象，创建ReliableRDDCheckpintData或者LocalRDDCheckpointData对象
   override def checkpoint(): Unit = { }
+  //
   override def localCheckpoint(): this.type = this
 
   // Note: There is a bug in MiMa that complains about `AbstractMethodProblem`s in the
   // base [[org.apache.spark.rdd.RDD]] class if we do not override the following methods.
   // scalastyle:off
+  //获取分区
   protected override def getPartitions: Array[Partition] = ???
+  //从checkpoint中读取数据
   override def compute(p: Partition, tc: TaskContext): Iterator[T] = ???
   // scalastyle:on
 
