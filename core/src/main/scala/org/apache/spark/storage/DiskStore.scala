@@ -29,8 +29,8 @@ import org.apache.spark.util.Utils
 import org.apache.spark.util.io.ChunkedByteBuffer
 
 /**
- * Stores BlockManager blocks on disk.
- */
+  * Stores BlockManager blocks on disk.
+  */
 private[spark] class DiskStore(conf: SparkConf, diskManager: DiskBlockManager) extends Logging {
 
   private val minMemoryMapBytes = conf.getSizeAsBytes("spark.storage.memoryMapThreshold", "2m")
@@ -40,16 +40,18 @@ private[spark] class DiskStore(conf: SparkConf, diskManager: DiskBlockManager) e
   }
 
   /**
-   * Invokes the provided callback function to write the specific block.
-   *
-   * @throws IllegalStateException if the block already exists in the disk store.
-   */
+    * Invokes the provided callback function to write the specific block.
+    * 调用提供的回掉方法把指定的block写到磁盘
+    *
+    * @throws IllegalStateException if the block already exists in the disk store.
+    */
   def put(blockId: BlockId)(writeFunc: FileOutputStream => Unit): Unit = {
     if (contains(blockId)) {
       throw new IllegalStateException(s"Block $blockId is already present in the disk store")
     }
     logDebug(s"Attempting to put block $blockId")
     val startTime = System.currentTimeMillis
+    //生成block文件，blockid作为文件名，包含一些创建文件夹的操作
     val file = diskManager.getFile(blockId)
     val fileOutputStream = new FileOutputStream(file)
     var threwException: Boolean = true
@@ -60,7 +62,7 @@ private[spark] class DiskStore(conf: SparkConf, diskManager: DiskBlockManager) e
       try {
         Closeables.close(fileOutputStream, threwException)
       } finally {
-         if (threwException) {
+        if (threwException) {
           remove(blockId)
         }
       }
@@ -83,6 +85,7 @@ private[spark] class DiskStore(conf: SparkConf, diskManager: DiskBlockManager) e
     }
   }
 
+  //读取出指定的block数据放到内存中
   def getBytes(blockId: BlockId): ChunkedByteBuffer = {
     val file = diskManager.getFile(blockId.name)
     val channel = new RandomAccessFile(file, "r").getChannel
@@ -107,6 +110,7 @@ private[spark] class DiskStore(conf: SparkConf, diskManager: DiskBlockManager) e
     }
   }
 
+  //删除block数据
   def remove(blockId: BlockId): Boolean = {
     val file = diskManager.getFile(blockId.name)
     if (file.exists()) {
