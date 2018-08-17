@@ -200,6 +200,7 @@ abstract class RDD[T: ClassTag](
     * Set this RDD's storage level to persist its values across operations after the first time
     * it is computed. This can only be used to assign a new storage level if the RDD does not
     * have a storage level set yet. Local checkpointing is an exception.
+    * 在RDD第一次被计算过后通过设置RDD的storage level 来持久化RDD的值
     */
   def persist(newLevel: StorageLevel): this.type = {
     if (isLocallyCheckpointed) {
@@ -331,6 +332,7 @@ abstract class RDD[T: ClassTag](
 
   /**
     * Compute an RDD partition or read it from a checkpoint if the RDD is checkpointing.
+    *
     */
   private[spark] def computeOrReadCheckpoint(split: Partition, context: TaskContext): Iterator[T] = {
     if (isCheckpointedAndMaterialized) {
@@ -770,8 +772,8 @@ abstract class RDD[T: ClassTag](
     *                           An example of pipe the RDD data of groupBy() in a streaming way,
     *                           instead of constructing a huge String to concat all the elements:
     *                           {{{
-    *                                                                                                                                                                                          def printRDDElement(record:(String, Seq[String]), f:String=>Unit) =
-    *                                                                                                                                                                                            for (e <- record._2) {f(e)}
+    *                                                                                                                                                                                                                     def printRDDElement(record:(String, Seq[String]), f:String=>Unit) =
+    *                                                                                                                                                                                                                       for (e <- record._2) {f(e)}
     *                           }}}
     * @param separateWorkingDir Use separate working directories for each task.
     * @param bufferSize         Buffer size for the stdin writer for the piped process.
@@ -1211,7 +1213,7 @@ abstract class RDD[T: ClassTag](
     *       To handle very large results, consider using
     *
     *       {{{
-    *                                           rdd.map(x => (x, 1L)).reduceByKey(_ + _)
+    *                                                  rdd.map(x => (x, 1L)).reduceByKey(_ + _)
     *       }}}
     *
     *       , which returns an RDD[T, Long] instead of a map.
@@ -1732,6 +1734,8 @@ abstract class RDD[T: ClassTag](
     * Performs the checkpointing of this RDD by saving this. It is called after a job using this RDD
     * has completed (therefore the RDD has been materialized and potentially stored in memory).
     * doCheckpoint() is called recursively on the parent RDDs.
+    *
+    * checkpointData.get.checkpoint()方法执行具体的写操作，由sc的action触发。如果本身没有checkpoint就根据依赖关系依次往上找。
     */
   private[spark] def doCheckpoint(): Unit = {
     RDDOperationScope.withScope(sc, "checkpoint", allowNesting = false, ignoreParent = true) {

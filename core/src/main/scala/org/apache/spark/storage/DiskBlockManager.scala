@@ -26,12 +26,14 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.util.{ShutdownHookManager, Utils}
 
 /**
- * Creates and maintains the logical mapping between logical blocks and physical on-disk
- * locations. One block is mapped to one file with a name given by its BlockId.
- *
- * Block files are hashed among the directories listed in spark.local.dir (or in
- * SPARK_LOCAL_DIRS, if it's set).
- */
+  * Creates and maintains the logical mapping between logical blocks and physical on-disk
+  * locations. One block is mapped to one file with a name given by its BlockId.
+  * 创建和维护blocks和磁盘存储位置的映射关系。每个block对应一个文件。文件名字是bclockId。
+  * Block files are hashed among the directories listed in spark.local.dir (or in
+  * SPARK_LOCAL_DIRS, if it's set).
+  *
+  * spark.local.dir目录存储 block 的文件。是通过文件名的hash到各个spark.local.dirs目录里面
+  */
 private[spark] class DiskBlockManager(conf: SparkConf, deleteFilesOnStop: Boolean) extends Logging {
 
   private[spark] val subDirsPerLocalDir = conf.getInt("spark.diskStore.subDirectories", 64)
@@ -53,6 +55,8 @@ private[spark] class DiskBlockManager(conf: SparkConf, deleteFilesOnStop: Boolea
   /** Looks up a file by hashing it into one of our local subdirectories. */
   // This method should be kept in sync with
   // org.apache.spark.network.shuffle.ExternalShuffleBlockResolver#getFile().
+
+  // 通过文件名的hash在目录中查找文件
   def getFile(filename: String): File = {
     // Figure out which local directory it hashes to, and which subdirectory in that
     val hash = Utils.nonNegativeHash(filename)
@@ -122,10 +126,13 @@ private[spark] class DiskBlockManager(conf: SparkConf, deleteFilesOnStop: Boolea
   }
 
   /**
-   * Create local directories for storing block data. These directories are
-   * located inside configured local directories and won't
-   * be deleted on JVM exit when using the external shuffle service.
-   */
+    * Create local directories for storing block data. These directories are
+    * located inside configured local directories and won't
+    * be deleted on JVM exit when using the external shuffle service.
+    *
+    *  在rootDir中创建blockmgr目录，用来存储block数据
+    *
+    */
   private def createLocalDirs(conf: SparkConf): Array[File] = {
     Utils.getConfiguredLocalDirs(conf).flatMap { rootDir =>
       try {
@@ -160,6 +167,7 @@ private[spark] class DiskBlockManager(conf: SparkConf, deleteFilesOnStop: Boolea
     doStop()
   }
 
+  //删除目录
   private def doStop(): Unit = {
     if (deleteFilesOnStop) {
       localDirs.foreach { localDir =>

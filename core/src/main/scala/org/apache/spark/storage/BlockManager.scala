@@ -986,7 +986,7 @@ private[spark] class BlockManager(
    * @return None if the block was already present or if the put succeeded, or Some(iterator)
    *         if the put failed.
    */
-  private def doPutIterator[T](
+  private def  doPutIterator[T](
       blockId: BlockId,
       iterator: () => Iterator[T],
       level: StorageLevel,

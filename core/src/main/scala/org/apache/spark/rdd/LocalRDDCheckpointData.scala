@@ -60,9 +60,7 @@ private[spark] class LocalRDDCheckpointData[T: ClassTag](@transient private val 
 }
 
 private[spark] object LocalRDDCheckpointData {
-
   val DEFAULT_STORAGE_LEVEL = StorageLevel.MEMORY_AND_DISK
-
   /**
    * Transform the specified storage level to one that uses disk.
    *
